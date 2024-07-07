@@ -1,0 +1,16 @@
+{
+    "name": "signaller",
+    "version": "1.0.0",
+    "description": "Notify subscribers after a value is updated.",
+    "license": "MIT",
+    "author": {
+        "name": "Caolan McMahon",
+        "email": "caolan@caolan.uk",
+        "url": "https://caolan.uk"
+    },
+    "repository": {
+        "type" : "git",
+        "url" : "https://github.com/caolan/signaller.git"
+    },
+    "main": "src/signaller.js"
+}
