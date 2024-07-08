@@ -24,19 +24,32 @@ export class Signaller {
     }
 
     /** @return {T} */
-    get current() {
+    get value() {
         return this.#value;
     }
 
     /**
-     * Updates the current value then takes all callbacks from the waiting
-     * list (clearing it) and calls each callback synchronously in the 
-     * order they were added.
+     * If the new value is not strictly equal to the current value, the 
+     * current value is updated and a change is signalled.
      * 
      * @param {T} value
      */
-    set(value) {
-        this.#value = value;
+    set value(value) {
+        if (this.#value !== value) {
+            this.#value = value;
+            this.signal();
+        }
+    }
+
+    /**
+     * Takes all callbacks from the waiting list (clearing it) and calls 
+     * each callback synchronously in the order they were added.
+     * 
+     * You do not need to call this function directly unless you have
+     * mutated the current value and wish to signal the change to any 
+     * watchers manually.
+     */
+    signal() {
         if (this.#waiting.length) {
             const calling = this.#waiting;
             this.#waiting = [];

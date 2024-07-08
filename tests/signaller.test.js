@@ -5,84 +5,84 @@ import { Signaller, watch } from "../src/signaller.js";
 import { timeout } from "./util.js";
 
 Deno.test("Multiple sync signals only calls watch handler once", async () => {
-    const s = new Signaller(null);
+    const s = new Signaller(0);
     let counter = 0;
 
     watch([s], () => {
         counter++;
     });
 
-    s.set(null);
-    s.set(null);
-    s.set(null);
+    s.value = 1;
+    s.value = 2;
+    s.value = 3;
     await timeout(0);
 
     assertEquals(counter, 1);
 });
 
 Deno.test("Async signals calls watch handler each time", async () => {
-    const s = new Signaller(null);
+    const s = new Signaller(0);
     let counter = 0;
 
     watch([s], () => {
         counter++;
     });
 
-    s.set(null);
+    s.value = 1;
     await timeout(0);
-    s.set(null);
+    s.value = 2;
     await timeout(0);
-    s.set(null);
+    s.value = 3;
     await timeout(0);
 
     assertEquals(counter, 3);
 });
 
-Deno.test("Signaller can set itself via sync set(null)", async () => {
-    const s = new Signaller(null);
+Deno.test("Signaller can set itself via sync current = null", async () => {
+    const s = new Signaller(0);
     let counter = 0;
 
     watch([s], () => {
         counter++;
         if (counter === 1) {
-            s.set(null);
+            s.value = 2;
         }
     });
 
-    s.set(null);
+    s.value = 1;
     await timeout(0);
 
     assertEquals(counter, 2);
 });
 
-Deno.test("Signaller can set itself via async set(null)", async () => {
-    const s = new Signaller(null);
+Deno.test("Signaller can set itself via async current = null", async () => {
+    const s = new Signaller(0);
     let counter = 0;
 
     watch([s], async () => {
         counter++;
         if (counter === 1) {
             await timeout(0);
-            s.set(null);
+            s.value = 2;
         }
     });
 
-    s.set(null);
+    s.value = 1;
     await timeout(0);
     await timeout(0);
 
     assertEquals(counter, 2);
 });
 
-Deno.test("If watch handler calls set(), subsequent handler still called once", async () => {
-    const s = new Signaller(null);
+Deno.test("If watch handler set current, subsequent handler still called once", async () => {
+    const s = new Signaller(0);
     let counter1 = 0;
     let counter2 = 0;
 
     watch([s], () => {
         counter1++;
         if (counter1 === 1) {
-            s.set(null);
+            s.value = 2;
         }
     });
 
@@ -90,7 +90,7 @@ Deno.test("If watch handler calls set(), subsequent handler still called once", 
         counter2++;
     });
 
-    s.set(null);
+    s.value = 1;
     await timeout(0);
 
     assertEquals(counter1, 2);
@@ -98,7 +98,7 @@ Deno.test("If watch handler calls set(), subsequent handler still called once", 
 });
 
 Deno.test("Async watch handler does not miss set during fullfillment", async () => {
-    const s = new Signaller(null);
+    const s = new Signaller(0);
     let counter1 = 0;
     let counter2 = 0;
 
@@ -106,7 +106,7 @@ Deno.test("Async watch handler does not miss set during fullfillment", async () 
         counter1++;
         await timeout(0);
         if (counter1 <= 2) {
-            s.set(null);
+            s.value++;
         }
     });
 
@@ -116,7 +116,7 @@ Deno.test("Async watch handler does not miss set during fullfillment", async () 
         await timeout(0);
     });
 
-    s.set(null);
+    s.value++;
     await timeout(0);
     await timeout(0);
     await timeout(0);
@@ -127,25 +127,25 @@ Deno.test("Async watch handler does not miss set during fullfillment", async () 
 });
 
 Deno.test("Signal multiple", async () => {
-    const foo = new Signaller(null);
-    const bar = new Signaller(null);
-    const baz = new Signaller(null);
-    /*** @type {Signaller<null>[][]} */
+    const foo = new Signaller(0);
+    const bar = new Signaller(0);
+    const baz = new Signaller(0);
+    /*** @type {Signaller<number>[][]} */
     const calls = [];
 
     watch([foo, bar, baz], changed => {
         calls.push(changed);
     });
 
-    foo.set(null);
-    baz.set(null);
-    foo.set(null);
+    foo.value++;
+    baz.value++;
+    foo.value++;
     await timeout(0);
-    bar.set(null);
+    bar.value++;
     await timeout(0);
-    foo.set(null);
-    bar.set(null);
-    bar.set(null);
+    foo.value++;
+    bar.value++;
+    bar.value++;
     await timeout(0);
 
     assertEquals(calls, [
@@ -156,10 +156,10 @@ Deno.test("Signal multiple", async () => {
 });
 
 Deno.test("Signal multiple, collect concurrent signals during fulfillment", async () => {
-    const foo = new Signaller(null);
-    const bar = new Signaller(null);
-    const baz = new Signaller(null);
-    /*** @type {Signaller<null>[][]} */
+    const foo = new Signaller(0);
+    const bar = new Signaller(0);
+    const baz = new Signaller(0);
+    /*** @type {Signaller<number>[][]} */
     const calls = [];
 
     watch([foo, bar, baz], async changed => {
@@ -168,16 +168,16 @@ Deno.test("Signal multiple, collect concurrent signals during fulfillment", asyn
         await timeout(0);
     });
 
-    foo.set(null);
-    baz.set(null);
-    foo.set(null);
+    foo.value++;
+    baz.value++;
+    foo.value++;
     await timeout(0);
-    bar.set(null);
-    baz.set(null);
+    bar.value++;
+    baz.value++;
     await timeout(0);
-    foo.set(null);
-    bar.set(null);
-    bar.set(null);
+    foo.value++;
+    bar.value++;
+    bar.value++;
     await timeout(0);
     await timeout(0);
     await timeout(0);
@@ -189,7 +189,7 @@ Deno.test("Signal multiple, collect concurrent signals during fulfillment", asyn
 });
 
 Deno.test("Stop while signal queued", async () => {
-    const s = new Signaller(null);
+    const s = new Signaller(0);
     let calls = 0;
 
     const stop = watch([s], async () => {
@@ -198,9 +198,9 @@ Deno.test("Stop while signal queued", async () => {
         await timeout(0);
     });
 
-    s.set(null);
+    s.value++;
     await timeout(0);
-    s.set(null);
+    s.value++;
     stop();
     await timeout(0);
     await timeout(0);
@@ -210,14 +210,14 @@ Deno.test("Stop while signal queued", async () => {
 });
 
 Deno.test("Stop before first call", async () => {
-    const s = new Signaller(null);
+    const s = new Signaller(0);
     let calls = 0;
 
     const stop = watch([s], () => {
         calls++;
     });
 
-    s.set(null);
+    s.value++;
     stop();
     await timeout(0);
 
@@ -225,7 +225,7 @@ Deno.test("Stop before first call", async () => {
 });
 
 Deno.test("Stop while handler is executing followed by subsequent set", async () => {
-    const s = new Signaller(null);
+    const s = new Signaller(0);
     let calls = 0;
 
     const stop = watch([s], async () => {
@@ -234,12 +234,12 @@ Deno.test("Stop while handler is executing followed by subsequent set", async ()
         await timeout(0);
     });
 
-    s.set(null);
+    s.value++;
     await timeout(0);
     stop();
     await timeout(0);
     await timeout(0);
-    s.set(null);
+    s.value++;
     await timeout(0);
     await timeout(0);
 
@@ -255,20 +255,20 @@ Deno.test("Setting different value", async () => {
         counter++;
     });
 
-    assertEquals(s.current, 123);
+    assertEquals(s.value, 123);
     await timeout(0);
-    s.set(456);
+    s.value = 456;
     await timeout(0);
-    assertEquals(s.current, 456);
-    s.set(789);
-    s.set(0);
+    assertEquals(s.value, 456);
+    s.value = 789;
+    s.value = 0;
     await timeout(0);
 
-    assertEquals(s.current, 0);
+    assertEquals(s.value, 0);
     assertEquals(counter, 2);
 });
 
-Deno.test("Setting same value still calls callbacks", async () => {
+Deno.test("Setting same value does not call callbacks", async () => {
     const s = new Signaller(123);
     let counter = 0;
 
@@ -276,29 +276,10 @@ Deno.test("Setting same value still calls callbacks", async () => {
         counter++;
     });
 
-    assertEquals(s.current, 123);
-    s.set(123);
+    assertEquals(s.value, 123);
+    s.value = 123;
     await timeout(0);
 
-    assertEquals(s.current, 123);
-    assertEquals(counter, 1);
-});
-
-Deno.test("Attempting to overwrite current property", async () => {
-    const s = new Signaller(123);
-    let counter = 0;
-
-    watch([s], () => {
-        counter++;
-    });
-
-    assertEquals(s.current, 123);
-    assertThrows(() => {
-        /** @type any */(s).current = 456;
-        assertEquals(s.current, 123);
-    });
-    await timeout(0);
-
-    assertEquals(s.current, 123);
+    assertEquals(s.value, 123);
     assertEquals(counter, 0);
 });

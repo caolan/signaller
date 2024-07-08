@@ -1,6 +1,6 @@
 {
     "name": "signaller",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "description": "Notify subscribers after a value is updated.",
     "license": "MIT",
     "author": {
@@ -12,5 +12,14 @@
         "type" : "git",
         "url" : "https://github.com/caolan/signaller.git"
     },
+    "files": [
+        "tests/**/*.js",
+        "src/**/*.js",
+        "README.md",
+        "LICENSE",
+        "package.json",
+        "deno.json",
+        "deno.lock"
+    ],
     "main": "src/signaller.js"
 }
