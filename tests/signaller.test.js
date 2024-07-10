@@ -38,7 +38,7 @@ Deno.test("Async signals calls watch handler each time", async () => {
     assertEquals(counter, 3);
 });
 
-Deno.test("Signaller can set itself via sync current = null", async () => {
+Deno.test("Signaller can set itself via sync assignment", async () => {
     const s = new Signaller(0);
     let counter = 0;
 
@@ -55,7 +55,7 @@ Deno.test("Signaller can set itself via sync current = null", async () => {
     assertEquals(counter, 2);
 });
 
-Deno.test("Signaller can set itself via async current = null", async () => {
+Deno.test("Signaller can set itself via async assignment", async () => {
     const s = new Signaller(0);
     let counter = 0;
 
@@ -74,7 +74,7 @@ Deno.test("Signaller can set itself via async current = null", async () => {
     assertEquals(counter, 2);
 });
 
-Deno.test("If watch handler set current, subsequent handler still called once", async () => {
+Deno.test("If watch handler sets value, subsequent handler still called once", async () => {
     const s = new Signaller(0);
     let counter1 = 0;
     let counter2 = 0;
@@ -282,4 +282,53 @@ Deno.test("Setting same value does not call callbacks", async () => {
 
     assertEquals(s.value, 123);
     assertEquals(counter, 0);
+});
+
+Deno.test("Manually wake handler via signal()", async () => {
+    const s = new Signaller(0);
+    let counter = 0;
+
+    watch([s], () => {
+        counter++;
+    });
+
+    s.signal();
+    await timeout(0);
+    s.signal();
+    s.signal();
+    s.signal();
+    await timeout(0);
+
+    assertEquals(counter, 2);
+});
+
+Deno.test("Add and remove callbacks", async () => {
+    const s = new Signaller('test');
+    /** @type {string[]} */
+    const calls = [];
+
+    /** @param {string} value */
+    function makeCallback(value) {
+        return () => calls.push(value);
+    }
+
+    const one = makeCallback('one');
+    const two = makeCallback('two');
+    const three = makeCallback('three');
+    const four = makeCallback('four');
+    const five = makeCallback('five');
+
+    s.addCallback(one);
+    s.addCallback(two);
+    s.addCallback(three);
+    s.addCallback(four);
+    s.addCallback(five);
+
+    s.removeCallback(three);
+    s.removeCallback(one);
+
+    s.signal();
+    await timeout(0);
+
+    assertEquals(calls, ['two', 'four', 'five']);
 });
