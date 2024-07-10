@@ -332,3 +332,8 @@ Deno.test("Add and remove callbacks", async () => {
 
     assertEquals(calls, ['two', 'four', 'five']);
 });
+
+Deno.test("Remove callback that was never added", () => {
+    const s = new Signaller('test');
+    s.removeCallback(() => {});
+});
